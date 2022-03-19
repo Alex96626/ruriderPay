@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css?v=18">
+    <title>Document</title>
+</head>
+<body>
+
+   
+
+
+<button class="add-lead">Создать сделку</button>
+<!-- partial:index.partial.html -->
+
+<div class="booking-list">
+  <ul class="services"></ul>
+  <div class="calendar">
+      <div class="calendar__month">
+        <div class="cal-month__previous"> < </div>
+        <div class="cal-month__current"> </div>
+        <div class="cal-month__next"> > </div>
+      </div>
+      <div class="calendar__head">
+        <div class="cal-head__day"></div>
+        <div class="cal-head__day"></div>
+        <div class="cal-head__day"></div>
+        <div class="cal-head__day"></div>
+        <div class="cal-head__day"></div>
+        <div class="cal-head__day"></div>
+        <div class="cal-head__day"></div>
+      </div>
+      <div class="calendar__body">
+        <div class="cal-body__week">
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+        </div>
+        <div class="cal-body__week">
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+        </div>
+        <div class="cal-body__week">
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+        </div>
+        <div class="cal-body__week">
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+        </div>
+        <div class="cal-body__week">
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+        </div>
+        <div class="cal-body__week">
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+          <div class="cal-body__day"></div>
+        </div>
+      </div>
+    </div>
+    <div class="free-time-booking">
+      <ul class="free-time-booking__list"></ul>
+      <button class="button-booking"> ЗАБРОНИРУЙ МЕНЯ</button>
+    </div>
+</div>
+  <!-- partial -->
+    <script src='https://momentjs.com/downloads/moment-with-locales.js'></script>
+    <script src="//api.bitrix24.com/api/v1"></script>
+    <script src="script.js?v =463"></script>
+    <script> 
+    document.addEventListener('DOMContentLoaded', () =>{
+        BX24.init(function(){
+        // app.SETTINGS = BX24.getAuth()
+        
+        })
+    })
+        
+    </script>
+</body>
+</html>
