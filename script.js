@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () =>{
       prise: null,
   }
   
-  //отрисовываем календарь
+  //отрисовываем календарьgit 
   const cal = new Calendar();
   cal.init(clickToDayOnCalendar);
 
