@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () =>{
 
   const url  ='https://rurider.bitrix24.ru/rest/1/sxdkj7grncs47nuz/'
+
   const newLead = document.querySelector('.newLeed')
 
   newLead.addEventListener('click', () => {
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () =>{
     const searchParams = new URLSearchParams(params)
     checkPossibilityBooking(bookingInfoList.idRecurses, bookingInfoList.dataCheckBooking.split('-').reverse().join('.'))
     fetch(`${url}crm.deal.add.json?${searchParams}`)
+
   })
 
   function checkPossibilityBooking ( idRecurses, dataCheckBooking,callback) {
@@ -136,152 +138,28 @@ document.addEventListener('DOMContentLoaded', () =>{
       prise: null,
   }
   
-  class Calendar {
-
-      constructor() {
-        this.monthDiv = document.querySelector('.cal-month__current');
-        this.headDivs = document.querySelectorAll('.cal-head__day');
-        this.bodyDivs = document.querySelectorAll('.cal-body__day');
-        this.nextDiv = document.querySelector('.cal-month__next');
-        this.prevDiv = document.querySelector('.cal-month__previous');
-      }
-    
-      init() {
-        moment.locale(window.navigator.userLanguage || window.navigator.language);
-    
-        this.month = moment();
-        this.today = this.selected = this.month.clone();
-        this.weekDays = moment.weekdaysShort(true);
-    
-        this.headDivs.forEach((day, index) => {
-          day.innerText = this.weekDays[index];
-        });
-    
-        this.nextDiv.addEventListener('click', _ => {this.addMonth();});
-        this.prevDiv.addEventListener('click', _ => {this.removeMonth();});
-    
-        this.bodyDivs.forEach(day => {
-          day.addEventListener('click', e => {
-              const date = +e.target.innerHTML < 10 ? `0${e.target.innerHTML}` : e.target.innerHTML;
-              bookingInfoList.dataCheckBooking  = `${this.month.format('YYYY-MM')}-${date}`
-              bookingInfoList.monthNumber =  this.month.clone().format('MM')
-              basket.dataBooking = `${this.month.format('YYYY-MM')}-${date}`
-              
-              console.log(bookingInfoList)
-              getFreeTimeSwimming(bookingInfoList, (result) =>{
-                  console.log(result)
-                  if(freeTimeBookingList.hasChildNodes()) 
-                  {
-                      document.querySelectorAll('.free-time-booking__item').forEach( (e) => {
-                          e.remove()
-                      })
-                  }
-                  freeTimeBookingList.append(...result.map(createNODWithFreeTimeBooking))
-              })
-
-            
-               console.log(`${this.month}`)
-            if (e.target.classList.contains('cal-day__month--next')) {
-              this.selected = moment(`${this.month.add(1, 'month').format('YYYY-MM')}-${date}`);
-            } else if (e.target.classList.contains('cal-day__month--previous')) {
-              this.selected = moment(`${this.month.subtract(1, 'month').format('YYYY-MM')}-${date}`);
-            } else {
-              this.selected = moment(`${this.month.format('YYYY-MM')}-${date}`);
-            }
-    
-            this.update();
-          });
-        });
-    
-        this.update();
-      }
-    
-      update() {
-        this.calendarDays = {
-          first: this.month.clone().startOf('month').startOf('week').date(),
-          last: this.month.clone().endOf('month').date() };
-    
-    
-        this.monthDays = {
-          lastPrevious: this.month.clone().subtract(1, 'months').endOf('month').date(),
-          lastCurrent: this.month.clone().endOf('month').date() };
-    
-    
-        this.monthString = this.month.clone().format('MMMM YYYY');
-    
-        this.draw();
-      }
-    
-      addMonth() {
-        this.month.add(1, 'month');
-    
-        this.update();
-      }
-    
-      removeMonth() {
-        this.month.subtract(1, 'month');
-    
-        this.update();
-      }
-    
-      draw() {
-        this.monthDiv.innerText = this.monthString;
-    
-        let index = 0;
-    
-        if (this.calendarDays.first > 1) {
-          for (let day = this.calendarDays.first; day <= this.monthDays.lastPrevious; index++) {
-            this.bodyDivs[index].innerText = day++;
-    
-            this.cleanCssClasses(false, index);
-    
-            this.bodyDivs[index].classList.add('cal-day__month--previous');
-          }
-        }
-    
-        let isNextMonth = false;
-        for (let day = 1; index <= this.bodyDivs.length - 1; index++) {
-          if (day > this.monthDays.lastCurrent) {
-            day = 1;
-            isNextMonth = true;
-          }
-    
-          this.cleanCssClasses(true, index);
-    
-          if (!isNextMonth) {
-            if (day === this.today.date() && this.today.isSame(this.month, 'day')) {
-              this.bodyDivs[index].classList.add('cal-day__day--today');
-            }
-    
-            if (day === this.selected.date() && this.selected.isSame(this.month, 'month')) {
-              this.bodyDivs[index].classList.add('cal-day__day--selected');
-            }
-    
-            this.bodyDivs[index].classList.add('cal-day__month--current');
-          } else {
-            this.bodyDivs[index].classList.add('cal-day__month--next');
-          }
-    
-          this.bodyDivs[index].innerText = day++;
-        }
-      }
-    
-      cleanCssClasses(selected, index) {
-        this.bodyDivs[index].classList.contains('cal-day__month--next') &&
-        this.bodyDivs[index].classList.remove('cal-day__month--next');
-        this.bodyDivs[index].classList.contains('cal-day__month--previous') &&
-        this.bodyDivs[index].classList.remove('cal-day__month--previous');
-        this.bodyDivs[index].classList.contains('cal-day__month--current') &&
-        this.bodyDivs[index].classList.remove('cal-day__month--current');
-        this.bodyDivs[index].classList.contains('cal-day__day--today') &&
-        this.bodyDivs[index].classList.remove('cal-day__day--today');
-        if (selected) {
-          this.bodyDivs[index].classList.contains('cal-day__day--selected') &&
-          this.bodyDivs[index].classList.remove('cal-day__day--selected');
-        }
-      }}
+  //отрисовываем календарь
   const cal = new Calendar();
-  cal.init();
+  cal.init(clickToDayOnCalendar);
+
+  function clickToDayOnCalendar (month, date) {
+    
+    bookingInfoList.dataCheckBooking  = `${month.format('YYYY-MM')}-${date}`
+    bookingInfoList.monthNumber =  month.clone().format('MM')
+    basket.dataBooking = `${month.format('YYYY-MM')}-${date}`
+    
+    console.log(bookingInfoList)
+    getFreeTimeSwimming(bookingInfoList, (result) =>{
+        console.log(result)
+        if(freeTimeBookingList.hasChildNodes()) 
+        {
+            document.querySelectorAll('.free-time-booking__item').forEach( (e) => {
+                e.remove()
+            })
+        }
+        freeTimeBookingList.append(...result.map(createNODEWithFreeTimeBooking))
+    })
+  }
       
   const data = new Date()
       data.setHours(8) // начало рабочего дня
@@ -289,27 +167,35 @@ document.addEventListener('DOMContentLoaded', () =>{
       data.setSeconds(0)
 
   // массив дат (часов) возможных для брони 
-  function getTimeSwimming ([{monthWorkDayStart, monthWorkDayEnd, monthStartTimeNotWork, monthEndTimeNotWork}]) {
-      const data = new Date()
-      data.setHours(monthWorkDayStart) // начало рабочего дня
-      data.setMinutes(0)
-      data.setSeconds(0)
-      const rangeTimeBooking  = 30//30 минут минимально допустимое время брони и шаг брони
+  function getTimeSwimming ([workTimeOnFocusMonth]) {
 
-      const timeSwimming = []
-      for(let i = 0; i <= ((monthWorkDayEnd - monthWorkDayStart) * 2); i++) {
-          const time = new Date(data.getTime() + rangeTimeBooking * i  * 60000)
-          const getHour = time.getHours()
-          const getMinutes = time.getMinutes()
-          const fullTime = Number(getHour + '.' + getMinutes)
+    const monthWorkDayStart = workTimeOnFocusMonth.monthWorkDayStart
+    const monthWorkDayEnd = workTimeOnFocusMonth.monthWorkDayEnd
+    const monthStartTimeNotWork = workTimeOnFocusMonth.monthStartTimeNotWork
+    const monthEndTimeNotWork = workTimeOnFocusMonth.monthEndTimeNotWork
+    
+    const data = new Date()
+    data.setHours(monthWorkDayStart) // начало рабочего дня
+    data.setMinutes(0)
+    data.setSeconds(0)
+    const rangeTimeBooking  = 30//30 минут минимально допустимое время брони и шаг брони
 
-          if(!(fullTime >= monthStartTimeNotWork  && fullTime < monthEndTimeNotWork)) {
-              timeSwimming.push( {time : time , dayStatus : 'work'})
-          } else  timeSwimming.push( {time : time , dayStatus : 'notwork'})
-          
-      }
+    const timeSwimming = []
+    for(let i = 0; i <= ((monthWorkDayEnd - monthWorkDayStart) * 2); i++) {
+        const time = new Date(data.getTime() + rangeTimeBooking * i  * 60000)
+        const getHour = time.getHours()
+        const getMinutes = time.getMinutes()
+        const fullTime = Number(getHour + '.' + getMinutes)
 
-      return timeSwimming
+        if(!(fullTime >= monthStartTimeNotWork  && fullTime < monthEndTimeNotWork)) {
+            timeSwimming.push( {time : time , dayStatus : 'work'})
+        } else  {
+          timeSwimming.push( {time : time , dayStatus : 'notwork'})
+        }
+        
+    }
+
+    return timeSwimming
   }
 
   // вытягивает из Битрикс данные о лодках
@@ -322,12 +208,13 @@ document.addEventListener('DOMContentLoaded', () =>{
           callback(result.result)
       }) 
   }
+
   getChipsInfo((result) => {
       showChipsInfoOnSite(result)
   })
 
   //создание списка катеров
-  const createNODWithChipInfo = ({ID, NAME}) => {
+  const createNODEWithChipInfo = ({ID, NAME}) => {
       const service =  document.createElement('li')
       service.classList = "service"
       service.innerText = NAME
@@ -340,16 +227,22 @@ document.addEventListener('DOMContentLoaded', () =>{
       return service // возвращаем созданную Li
   }
 
-  const createNODWithFreeTimeBooking = ({time, dayStatus}) => {
+  const createNODEWithFreeTimeBooking = ({time, dayStatus}) => {
       const freeTimeBookingItem =  document.createElement('li')
       freeTimeBookingItem.status = dayStatus
       freeTimeBookingItem.classList = "free-time-booking__item"
-      if(dayStatus === 'notwork') freeTimeBookingItem.classList.add('free-time-booking__item--not-work')
-      if(dayStatus === 'busy') freeTimeBookingItem.classList.add('free-time-booking__item--busy')
+      if(dayStatus === 'notwork') {
+        freeTimeBookingItem.classList.add('free-time-booking__item--not-work')
+      }
+
+      if(dayStatus === 'busy'){
+        freeTimeBookingItem.classList.add('free-time-booking__item--busy')
+      }
+
       freeTimeBookingItem.time = time
       freeTimeBookingItem.innerText = time.getHours() + '.' + time.getMinutes()
       freeTimeBookingItem.addEventListener('click', (event) => {
-        getTimeRangeSwimming()
+        getTimeRangeSwimming(event)
         basket.timeStartBooking = event.target.time
 
         bookingInfoList.timeBooking =  time.getHours() + ':' + time.getMinutes() + ':' + time.getSeconds()
@@ -361,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () =>{
 
   // отображение списка катеров на сайте
   const showChipsInfoOnSite = (result) => {
-      services.append(...result.map(createNODWithChipInfo))
+      services.append(...result.map(createNODEWithChipInfo))
   }
 
   // получение данных о свободном времени брони для лодки  
@@ -399,7 +292,9 @@ document.addEventListener('DOMContentLoaded', () =>{
                 return getHoursTimeSwimming >= getHourStarTimeBooking && getHoursTimeSwimming <= getHourEndTimeBooking
             }) 
   
-            if(checkTimeNotWork) item.dayStatus = 'busy'
+            if(checkTimeNotWork) {
+              item.dayStatus = 'busy'
+            }
             return item
           })
   
@@ -411,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () =>{
       })
   }
   // время на которое можно забронрировать
-  function getTimeRangeSwimming (day) {
+  function getTimeRangeSwimming (event) {
     const times = document.querySelectorAll('.free-time-booking__item')
     const timesToArray = Array.from(times)
     const time  = event.target
@@ -427,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () =>{
     data.setSeconds(0)
 
     const listTimeBooking = listTimeFreeToBooking.map( ( item,index) => {
-      return item = new Date(data.getTime() + 30 * (index + 1)  * 60000)
+      return new Date(data.getTime() + 30 * (index + 1)  * 60000)
     })
     console.log(listTimeBooking)
     
@@ -454,9 +349,10 @@ document.addEventListener('DOMContentLoaded', () =>{
         basketShow ()
         //закрасить/перекрасить забронированное клиентом время
         times.forEach( item => item.classList.remove('free-time-booking__item--busy-now'))
-        listTimeFreeToBooking.map( (item, index) => {
-          
-          if(index <= i) item.classList.add('free-time-booking__item--busy-now')
+        listTimeFreeToBooking.forEach( (item, index) => {
+          if(index <= i) {
+            item.classList.add('free-time-booking__item--busy-now')
+          }
         })
         
         //закрыть себя
