@@ -3,10 +3,12 @@ document.addEventListener('DOMContentLoaded', () =>{
   const url  ='https://rurider.bitrix24.ru/rest/1/sxdkj7grncs47nuz/'
 
   const newLead = document.querySelector('.newLeed')
+  const services = document.querySelector('.services')
 
   newLead.addEventListener('click', () => {
     console.log(bookingInfoList)
     const data = bookingInfoList.dataCheckBooking.split('-').reverse().join('.')
+    const month = data.split('.')[1]
     const time = bookingInfoList.timeBooking.split(":")
     const hour = time[0]
     const minutes = time[1]
@@ -26,22 +28,63 @@ document.addEventListener('DOMContentLoaded', () =>{
     }
   
     const searchParams = new URLSearchParams(params)
-    checkPossibilityBooking(bookingInfoList.idRecurses, bookingInfoList.dataCheckBooking.split('-').reverse().join('.'))
-    fetch(`${url}crm.deal.add.json?${searchParams}`)
+    getBusyTimeNow(bookingInfoList.idRecurses, bookingInfoList.dataCheckBooking.split('-').reverse().join('.'), (result => {
+      console.log(result)
 
+      // вытаскиваем время ранее забронированное с шагом 30 мин
+      
+       const busyTime =  result.reduce( (acc,{DATE_FROM, DATE_TO}) => {
+          const date = new Date(DATE_FROM)
+          const hourBusy = (new Date(DATE_TO) - new Date(DATE_FROM)) / 1000 / 60 / 60 //1.5
+
+          for(let i = 0; i <= hourBusy; i +=0.5) {
+            const timeBusyFormatDate = new Date(date.getTime() + 30 * i  * 120000)
+            const hour = timeBusyFormatDate.getHours()
+            const minutes = timeBusyFormatDate.getMinutes()
+            const getTime = hour + '.' + minutes
+            acc.push(getTime)
+          }
+          return acc
+        }, [])  
+       
+    
+      // время сейчас забронированное
+      const timeBusyNow = document.querySelectorAll('.free-time-booking__item--busy-now')
+      const busyNowTime = Array.from(timeBusyNow).reduce ((acc,{time}) => {
+          console.log(time)
+          const hour = new Date(time).getHours()
+          const minutes = new Date(time).getMinutes()
+          const getTime = hour + '.' + minutes
+          acc.push(getTime)
+          return acc
+      }, [])
+      console.log(busyNowTime)
+
+      const checkPossibilityBooking = busyNowTime.some( (item) => {
+        return  busyTime.some( elem => {
+            return item === elem
+          })
+        })
+    
+        console.log(checkPossibilityBooking)
+
+        if(!checkPossibilityBooking) {
+          fetch(`${url}crm.deal.add.json?${searchParams}`)  
+        } else alert('А уже все, все все')
+    }))
   })
 
-  function checkPossibilityBooking ( idRecurses, dataCheckBooking,callback) {
+  function getBusyTimeNow (idRecurses, dataCheckBooking, callback) {
     fetch(`https://rurider.bitrix24.ru/rest/1/sxdkj7grncs47nuz/calendar.resource.booking.list.json?filter[from]=${dataCheckBooking}&filter[to]=${dataCheckBooking}&filter[resourceTypeIdList][0]=${idRecurses}&filter[resourceTypeIdList][1]=4`)
     .then(response => {
         return response.json()
     })
     .then(result => {
-      console.log(result)
+      callback(result.result)
     })
   } // пока не работает)
 
-  const services = document.querySelector('.services')
+  
 
   // список свободного времение бронирования
   const freeTimeBookingList = document.querySelector('.free-time-booking__list')
@@ -123,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () =>{
 
   // информация по броне
   const bookingInfoList = {
-      idRecurses : null,
+      idRecurses : [],
       dataCheckBooking : null,
       timeBooking : null,
       durationBooking : null,
@@ -215,16 +258,46 @@ document.addEventListener('DOMContentLoaded', () =>{
 
   //создание списка катеров
   const createNODEWithChipInfo = ({ID, NAME}) => {
-      const service =  document.createElement('li')
-      service.classList = "service"
-      service.innerText = NAME
-      service.addEventListener('click', () => {
-          bookingInfoList.idRecurses = ID
-          basket.chipName = NAME
-          service.classList.toggle('service--active')
-          
-      })
-      return service // возвращаем созданную Li
+    const service =  document.createElement('label')
+    service.htmlFor = NAME.toLowerCase().split(' ').join('-')
+    service.classList = "service";
+    service.addEventListener('click', () => {
+      console.log(event)
+      
+        
+      
+      
+      basket.chipName = NAME
+
+      if(service_check.checked) {
+        service.classList.add("service--active") 
+        if(!(bookingInfoList.idRecurses.includes(ID))) {
+          bookingInfoList.idRecurses.push(ID)
+          console.log(bookingInfoList.idRecurses)
+        }
+      }
+      else {
+        service.classList.remove("service--active") 
+      }
+
+    })
+
+    
+  
+
+    const service_name = document.createElement('span')
+    service_name.innerHTML = NAME
+
+    const service_check = document.createElement('input')
+    service_check.type = "checkbox"
+    service_check.name = NAME.toLowerCase().split(' ').join('-')
+    service_check.id = NAME.toLowerCase().split(' ').join('-')
+    
+
+    service.append(service_name)
+    service.append(service_check)
+    
+    return service // возвращаем созданную label
   }
 
   const createNODEWithFreeTimeBooking = ({time, dayStatus}) => {
@@ -254,16 +327,22 @@ document.addEventListener('DOMContentLoaded', () =>{
 
   // отображение списка катеров на сайте
   const showChipsInfoOnSite = (result) => {
-      services.append(...result.map(createNODEWithChipInfo))
+      // services.append(...result.map(createNODEWithChipInfo))
+      services.append(...result.map((item) => {
+        console.log(item)
+        return createNODEWithChipInfo(item)
+      }))
   }
 
   // получение данных о свободном времени брони для лодки  
   function getFreeTimeSwimming ({idRecurses, dataCheckBooking },callback) {
+    const idList = Object.values(idRecurses)
     const params = {
       'filter[from]' : dataCheckBooking,
-     'filter[to]' : dataCheckBooking,
-      'filter[resourceTypeIdList][0]' : idRecurses,
-      'filter[resourceTypeIdList][1]' : 4,
+      'filter[to]' : dataCheckBooking,
+
+      // 'filter[resourceTypeIdList][0]' : idRecurses,
+      // 'filter[resourceTypeIdList][1]' : 4,
     }
 
     const searchParams = new URLSearchParams(params)
@@ -325,11 +404,6 @@ document.addEventListener('DOMContentLoaded', () =>{
       return new Date(data.getTime() + 30 * (index + 1)  * 60000)
     })
     console.log(listTimeBooking)
-    
-    if(event.target.querySelector('ul') !== null) {
-      console.log('dfdsffdf')
-      // event.target.querySelector('ul').remove()
-    }
     
     const newListTime =  document.createElement('ul')
     newListTime.classList = 'new-list-time'

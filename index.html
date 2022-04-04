@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css?v=18">
+    <link rel="stylesheet" href="style.css?v=19">
     <title>Document</title>
 </head>
 <body>
 
     <div class="booking-list">
-        <ul class="services"></ul>
+        <div class="services"></div>
         <div class="calendar">
             <div class="calendar__month">
               <div class="cal-month__previous"> < </div>
@@ -104,9 +104,17 @@
         </div>
        
     <button class="newLeed">Создай сделку</button>
+    <form id="client-i" action="">
+      <input type="text" name="client-name" placeholder="Имя">
+      <input type="text" name="client-phone" placeholder="Телефон">
+    </form>
+   
+    
 
     <script src='https://momentjs.com/downloads/moment-with-locales.js'></script>
+    <!-- <script type="text/javascript" src="https://www.payanyway.ru/assistant-builder"> </script> -->
     <script src="calendar.js"></script>
+    <script src="pay.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

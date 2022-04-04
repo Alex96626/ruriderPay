@@ -105,6 +105,11 @@ body {
     display: flex;
   }
 
+  .services {
+    display: flex;
+    flex-direction: column;
+  }
+
   .service--active {
     color: aqua;
     border: 1px solid ;
