@@ -28,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () =>{
     bookingInfoList.idResources.forEach( (item,index) => {
       params[`fields[UF_CRM_1579263511138][${index + 1}]`] = `resource|${item}|${data} ${hour}:${minutes}:${seconds}|${durationBooking}`
     })
+
     const searchParams = new URLSearchParams(params)
     getBusyTimeNow(bookingInfoList.idResources, bookingInfoList.dataCheckBooking.split('-').reverse().join('.'))
       .then((result) => {
@@ -70,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () =>{
       })
   })
 
-  function getBusyTimeNow (idResources, dataCheckBooking) {
+  function getResourceInfo (idResources,dataCheckBooking) {
     const idList = Object.values(idResources)
   
     const params = {
@@ -81,7 +82,16 @@ document.addEventListener('DOMContentLoaded', () =>{
     idList.forEach( (item,index) => {
       params[`filter[resourceTypeIdList][${index + 1}]`] = item
     })
+
+    return params
+  }
+
+  function getBusyTimeNow (idResources, dataCheckBooking) {
+    
+    params = getResourceInfo(idResources, dataCheckBooking)
+
     const searchParams = new URLSearchParams(params).toString()
+
     return fetch(`${url}calendar.resource.booking.list.json?${searchParams}`)
     .then(response => {
       return response.json()
@@ -328,18 +338,11 @@ document.addEventListener('DOMContentLoaded', () =>{
 
   // получение данных о свободном времени брони для лодки  
   function getFreeTimeSwimming ({idResources, dataCheckBooking, monthNumber},callback) {
-    const idList = Object.values(idResources)
-  
-    const params = {
-      'filter[from]' : dataCheckBooking,
-      'filter[to]' : dataCheckBooking,
-    }
-
-    idList.forEach( (item,index) => {
-      params[`filter[resourceTypeIdList][${index + 1}]`] = item
-    })
+    
+    params = getResourceInfo(idResources, dataCheckBooking)
 
     const searchParams = new URLSearchParams(params).toString()
+
     fetch(`${url}calendar.resource.booking.list.json?${searchParams}`)
       .then(response => {
           return response.json()
@@ -356,7 +359,6 @@ document.addEventListener('DOMContentLoaded', () =>{
   
           const listFreeTimeSwimming = timeSwimming.filter( (item) => {
             const time = item.time
-            // const dayStatus = item.dayStatus
             const getHoursTimeSwimming = Number(time.getHours() + '.' + time.getMinutes())
   
             const checkTimeNotWork =  busyTimeSwimming.some( ([starTimeBooking, endTimeBooking]) => {
