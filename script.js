@@ -6,9 +6,8 @@ document.addEventListener('DOMContentLoaded', () =>{
   const services = document.querySelector('.services')
 
   newLead.addEventListener('click', () => {
-    console.log(bookingInfoList)
     const data = bookingInfoList.dataCheckBooking.split('-').reverse().join('.')
-    const month = data.split('.')[1]
+    const durationBooking = bookingInfoList.durationBooking
     const time = bookingInfoList.timeBooking.split(":")
     const hour = time[0]
     const minutes = time[1]
@@ -23,68 +22,75 @@ document.addEventListener('DOMContentLoaded', () =>{
         "fields[ASSIGNED_BY_ID]": 1, 
         "fields[PROBABILITY]": 30,
         "fields[OPPORTUNITY]": 5000,
-        "fields[CATEGORY_ID]": 5,
-        "fields[UF_CRM_1579263511138][0]": `resource|${bookingInfoList.idRecurses}|${data} ${hour}:${minutes}:${seconds}|${bookingInfoList.durationBooking}|Вейкборд`,                          
+        "fields[CATEGORY_ID]": 5,                         
     }
-  
+
+    bookingInfoList.idResources.forEach( (item,index) => {
+      params[`fields[UF_CRM_1579263511138][${index + 1}]`] = `resource|${item}|${data} ${hour}:${minutes}:${seconds}|${durationBooking}`
+    })
     const searchParams = new URLSearchParams(params)
-    getBusyTimeNow(bookingInfoList.idRecurses, bookingInfoList.dataCheckBooking.split('-').reverse().join('.'), (result => {
-      console.log(result)
+    getBusyTimeNow(bookingInfoList.idResources, bookingInfoList.dataCheckBooking.split('-').reverse().join('.'))
+      .then((result) => {
 
-      // вытаскиваем время ранее забронированное с шагом 30 мин
-      
-       const busyTime =  result.reduce( (acc,{DATE_FROM, DATE_TO}) => {
-          const date = new Date(DATE_FROM)
-          const hourBusy = (new Date(DATE_TO) - new Date(DATE_FROM)) / 1000 / 60 / 60 //1.5
+        // вытаскиваем время ранее забронированное с шагом 30 мин
+        
+        const busyTime =  result.reduce( (acc,{DATE_FROM, DATE_TO}) => {
+            const date = new Date(DATE_FROM)
+            const hourBusy = (new Date(DATE_TO) - new Date(DATE_FROM)) / 1000 / 60 / 60 //1.5
 
-          for(let i = 0; i <= hourBusy; i +=0.5) {
-            const timeBusyFormatDate = new Date(date.getTime() + 30 * i  * 120000)
-            const hour = timeBusyFormatDate.getHours()
-            const minutes = timeBusyFormatDate.getMinutes()
+            for(let i = 0; i <= hourBusy; i +=0.5) {
+              const timeBusyFormatDate = new Date(date.getTime() + 30 * i  * 120000)
+              const hour = timeBusyFormatDate.getHours()
+              const minutes = timeBusyFormatDate.getMinutes()
+              const getTime = hour + '.' + minutes
+              acc.push(getTime)
+            }
+            return acc
+          }, [])  
+        
+        // время сейчас забронированное
+        const timeBusyNow = document.querySelectorAll('.free-time-booking__item--busy-now')
+        const busyNowTime = Array.from(timeBusyNow).reduce ((acc,{time}) => {
+            const hour = new Date(time).getHours()
+            const minutes = new Date(time).getMinutes()
             const getTime = hour + '.' + minutes
             acc.push(getTime)
-          }
-          return acc
-        }, [])  
-       
-    
-      // время сейчас забронированное
-      const timeBusyNow = document.querySelectorAll('.free-time-booking__item--busy-now')
-      const busyNowTime = Array.from(timeBusyNow).reduce ((acc,{time}) => {
-          console.log(time)
-          const hour = new Date(time).getHours()
-          const minutes = new Date(time).getMinutes()
-          const getTime = hour + '.' + minutes
-          acc.push(getTime)
-          return acc
-      }, [])
-      console.log(busyNowTime)
+            return acc
+        }, [])
 
-      const checkPossibilityBooking = busyNowTime.some( (item) => {
-        return  busyTime.some( elem => {
-            return item === elem
+        const checkPossibilityBooking = busyNowTime.some( (item) => {
+          return  busyTime.some( elem => {
+              return item === elem
+            })
           })
-        })
-    
-        console.log(checkPossibilityBooking)
-
-        if(!checkPossibilityBooking) {
-          fetch(`${url}crm.deal.add.json?${searchParams}`)  
-        } else alert('А уже все, все все')
-    }))
+      
+          if(!checkPossibilityBooking) {
+            fetch(`${url}crm.deal.add.json?${searchParams}`)  
+          } else alert('А уже все, все все')
+      })
   })
 
-  function getBusyTimeNow (idRecurses, dataCheckBooking, callback) {
-    fetch(`https://rurider.bitrix24.ru/rest/1/sxdkj7grncs47nuz/calendar.resource.booking.list.json?filter[from]=${dataCheckBooking}&filter[to]=${dataCheckBooking}&filter[resourceTypeIdList][0]=${idRecurses}&filter[resourceTypeIdList][1]=4`)
+  function getBusyTimeNow (idResources, dataCheckBooking) {
+    const idList = Object.values(idResources)
+  
+    const params = {
+      'filter[from]' : dataCheckBooking,
+      'filter[to]' : dataCheckBooking,
+    }
+
+    idList.forEach( (item,index) => {
+      params[`filter[resourceTypeIdList][${index + 1}]`] = item
+    })
+    const searchParams = new URLSearchParams(params).toString()
+    return fetch(`${url}calendar.resource.booking.list.json?${searchParams}`)
     .then(response => {
-        return response.json()
+      return response.json()
     })
     .then(result => {
-      callback(result.result)
+      return result.result
     })
-  } // пока не работает)
-
-  
+     
+  } 
 
   // список свободного времение бронирования
   const freeTimeBookingList = document.querySelector('.free-time-booking__list')
@@ -166,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () =>{
 
   // информация по броне
   const bookingInfoList = {
-      idRecurses : [],
+      idResources : [],
       dataCheckBooking : null,
       timeBooking : null,
       durationBooking : null,
@@ -174,11 +180,7 @@ document.addEventListener('DOMContentLoaded', () =>{
   }
 
   const basket = {
-      chipName: null,
-      dataBooking: null,
-      timeStartBooking: null,
-      timeEndBooking: null,
-      prise: null,
+      chipName: [],
   }
   
   //отрисовываем календарьgit 
@@ -191,9 +193,7 @@ document.addEventListener('DOMContentLoaded', () =>{
     bookingInfoList.monthNumber =  month.clone().format('MM')
     basket.dataBooking = `${month.format('YYYY-MM')}-${date}`
     
-    console.log(bookingInfoList)
     getFreeTimeSwimming(bookingInfoList, (result) =>{
-        console.log(result)
         if(freeTimeBookingList.hasChildNodes()) 
         {
             document.querySelectorAll('.free-time-booking__item').forEach( (e) => {
@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () =>{
 
   // вытягивает из Битрикс данные о лодках
   function getChipsInfo (callback) {
-    fetch(`https://rurider.bitrix24.ru/rest/1/sxdkj7grncs47nuz/calendar.resource.list`)
+    fetch(`${url}calendar.resource.list`)
       .then(response => {
           return response.json()
       })
@@ -258,44 +258,40 @@ document.addEventListener('DOMContentLoaded', () =>{
 
   //создание списка катеров
   const createNODEWithChipInfo = ({ID, NAME}) => {
+    const nameModify = NAME.toLowerCase().split(' ').join('-')
     const service =  document.createElement('label')
-    service.htmlFor = NAME.toLowerCase().split(' ').join('-')
+    service.htmlFor = nameModify
     service.classList = "service";
     service.addEventListener('click', () => {
-      console.log(event)
       
-        
-      
-      
-      basket.chipName = NAME
-
-      if(service_check.checked) {
-        service.classList.add("service--active") 
-        if(!(bookingInfoList.idRecurses.includes(ID))) {
-          bookingInfoList.idRecurses.push(ID)
-          console.log(bookingInfoList.idRecurses)
-        }
-      }
-      else {
-        service.classList.remove("service--active") 
-      }
-
     })
 
+    const serviceName = document.createElement('span')
+    serviceName.innerHTML = NAME
+
+    const serviceCheck = document.createElement('input')
+    serviceCheck.type = "checkbox"
+    serviceCheck.name = nameModify
+    serviceCheck.id = nameModify
+    serviceCheck.addEventListener('change', () => {
+      if(serviceCheck.checked) {
+        service.classList.add("service--active") 
+          bookingInfoList.idResources.push(ID)
+          basket.chipName.push(NAME)
+          basketShow (basket)
+      }
+      else {
+        const indexidResourcesRemoving = bookingInfoList.idResources.findIndex( item => item === ID)
+        const indexChipNameRemoving =  basket.chipName.findIndex( item => item === NAME)
+        bookingInfoList.idResources.splice(indexidResourcesRemoving, 1)
+        basket.chipName.splice(indexChipNameRemoving, 1)
+        service.classList.remove("service--active") 
+        basketShow(basket)
+      }
+    })
     
-  
-
-    const service_name = document.createElement('span')
-    service_name.innerHTML = NAME
-
-    const service_check = document.createElement('input')
-    service_check.type = "checkbox"
-    service_check.name = NAME.toLowerCase().split(' ').join('-')
-    service_check.id = NAME.toLowerCase().split(' ').join('-')
-    
-
-    service.append(service_name)
-    service.append(service_check)
+    service.append(serviceName)
+    service.append(serviceCheck)
     
     return service // возвращаем созданную label
   }
@@ -327,32 +323,30 @@ document.addEventListener('DOMContentLoaded', () =>{
 
   // отображение списка катеров на сайте
   const showChipsInfoOnSite = (result) => {
-      // services.append(...result.map(createNODEWithChipInfo))
-      services.append(...result.map((item) => {
-        console.log(item)
-        return createNODEWithChipInfo(item)
-      }))
+      services.append(...result.map(createNODEWithChipInfo)) 
   }
 
   // получение данных о свободном времени брони для лодки  
-  function getFreeTimeSwimming ({idRecurses, dataCheckBooking },callback) {
-    const idList = Object.values(idRecurses)
+  function getFreeTimeSwimming ({idResources, dataCheckBooking, monthNumber},callback) {
+    const idList = Object.values(idResources)
+  
     const params = {
       'filter[from]' : dataCheckBooking,
       'filter[to]' : dataCheckBooking,
-
-      // 'filter[resourceTypeIdList][0]' : idRecurses,
-      // 'filter[resourceTypeIdList][1]' : 4,
     }
 
-    const searchParams = new URLSearchParams(params)
+    idList.forEach( (item,index) => {
+      params[`filter[resourceTypeIdList][${index + 1}]`] = item
+    })
+
+    const searchParams = new URLSearchParams(params).toString()
     fetch(`${url}calendar.resource.booking.list.json?${searchParams}`)
       .then(response => {
           return response.json()
       })
       .then(result => {
-        console.log(result)
-        const workTimeOnFocusMonth = Object.values(monthTimeInfoList).filter( (item) => {return item.monthId === Number(bookingInfoList.monthNumber) })
+        const sizeMonthTimeInfoList = Object.values(monthTimeInfoList)
+        const workTimeOnFocusMonth = sizeMonthTimeInfoList.filter(item => item.monthId === Number(monthNumber))
         const timeSwimming = getTimeSwimming(workTimeOnFocusMonth)
   
         if(result.result.length) {
@@ -374,7 +368,9 @@ document.addEventListener('DOMContentLoaded', () =>{
             if(checkTimeNotWork) {
               item.dayStatus = 'busy'
             }
+
             return item
+
           })
   
           callback(listFreeTimeSwimming)
@@ -384,6 +380,7 @@ document.addEventListener('DOMContentLoaded', () =>{
       
       })
   }
+
   // время на которое можно забронрировать
   function getTimeRangeSwimming (event) {
     const times = document.querySelectorAll('.free-time-booking__item')
@@ -394,7 +391,6 @@ document.addEventListener('DOMContentLoaded', () =>{
     const indexTimeLastFreeForTimeClick =  listTimeForBusy.findIndex( (item) => item.status !== 'work')
     const listTimeFreeToBooking = listTimeForBusy.slice(0,indexTimeLastFreeForTimeClick)
     
-    console.log(listTimeFreeToBooking)
     const data = new Date()
     data.setHours(0)
     data.setMinutes(0)
@@ -403,7 +399,6 @@ document.addEventListener('DOMContentLoaded', () =>{
     const listTimeBooking = listTimeFreeToBooking.map( ( item,index) => {
       return new Date(data.getTime() + 30 * (index + 1)  * 60000)
     })
-    console.log(listTimeBooking)
     
     const newListTime =  document.createElement('ul')
     newListTime.classList = 'new-list-time'
@@ -412,15 +407,13 @@ document.addEventListener('DOMContentLoaded', () =>{
       newItemTime.innerText = listTimeBooking[i].getHours() + '.' + listTimeBooking[i].getMinutes()
       newItemTime.time = 0.5 * (i + 1)
       newItemTime.addEventListener('click', (event) => {
-        
-        console.log(event.target.timeBusy = listTimeBooking[i] )
         basket.timeEndBooking = new Date( new Date (basket.timeStartBooking).getTime() + 3600000 * newItemTime.time )
         basket.timeStartBooking +  listTimeBooking[i].getHours()
 
         // инфа по бронированию
         bookingInfoList.durationBooking =  (basket.timeEndBooking.getTime() - basket.timeStartBooking.getTime()) / 1000 // перевод в секунды
         
-        basketShow ()
+        basketShow (basket)
         //закрасить/перекрасить забронированное клиентом время
         times.forEach( item => item.classList.remove('free-time-booking__item--busy-now'))
         listTimeFreeToBooking.forEach( (item, index) => {
@@ -432,14 +425,22 @@ document.addEventListener('DOMContentLoaded', () =>{
         //закрыть себя
         event.target.closest('.new-list-time').remove()
       })
+
       newListTime.append(newItemTime)
+
     }
+
   event.target.append(newListTime)
+  
   }
 
-  function basketShow () {
-    const basketNod =  document.querySelector('.basket')
-    basketNod.innerHTML = basket.chipName +'-' + basket.dataBooking + '-' + basket.timeStartBooking + '-' + basket.timeEndBooking
+  function basketShow (basket) {
+    const basketNODE =  document.querySelector('.basket')
+    const chipName = basket?.chipName ?? ''
+    const dataBooking = basket?.dataBooking ?? ''
+    const timeStartBooking = basket?.timeStartBooking ?? ''
+    const timeEndBooking = basket?.timeEndBooking ?? ''
+    basketNODE.innerHTML = chipName +'-' + dataBooking + '-' + timeStartBooking + '-' + timeEndBooking
   }
 
 })
